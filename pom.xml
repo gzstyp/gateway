@@ -11,7 +11,7 @@
 
         启动顺序是先启动 '注册中心' --> 微服务 --> 网关
 
-        使用redis作为令牌桶做限流处理,eureka未做集群
+        使用redis作为令牌桶做限流处理,eureka未做集群,记得开启redis
 
     </description>
 
