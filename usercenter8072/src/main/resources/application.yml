@@ -1,0 +1,12 @@
+server:
+  port: 8072
+spring:
+  application:
+    name: usercenter
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:9091/eureka/
+  instance:
+    instance-id: usercenter-8072
+    prefer-ip-address: true

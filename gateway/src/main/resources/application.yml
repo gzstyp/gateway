@@ -1,0 +1,59 @@
+#把网关注册到注册中心,就可以通过服务名来访问了(开启微服务的转发)[spring.cloud.gateway.discovery.locator.lower-case-service-id=true,开启服务名(服务id)小写,默认是大写]
+server:
+  port: 9002
+spring:
+  application:
+    name: gateway9002
+  #配置redis来做限流
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+  cloud:
+    gateway:
+      routes:
+        - id: product
+          #uri: http://127.0.0.1:8083,改用服务名来访问,大写的服务名,默认就是大写的(它和下面的discovery的配置是一样的效果???)
+          uri: lb://PRODUCTCENTER
+          predicates:
+          #局部拦截器
+          - Path=/productcenter/**
+          #限流配置
+          filters:
+            - RewritePath=/productcenter/(?<segmet>.*),/$\{segmet}
+            - name: RequestRateLimiter
+              args:
+                #需要配置一个Bean的名称为 uriKeyResolver 它会往redis里操作这个key
+                key-resolver: '#{@uriKeyResolver}'
+                #表示1秒钟放一个令牌
+                redis-rate-limiter.replenishRate: 1
+                #表示最大的令牌数是2,就是1秒钟内限制访问次数
+                redis-rate-limiter.burstCapacity: 2
+        - id: user
+          uri: lb://USERCENTER
+          predicates:
+          #局部拦截器
+          - Path=/usercenter/**
+          #限流配置
+          filters:
+          - RewritePath=/usercenter/(?<segmet>.*),/$\{segmet}
+          - name: RequestRateLimiter
+            args:
+              #需要配置一个Bean的名称为 uriKeyResolver 它会往redis里设置这个key???
+              key-resolver: '#{@uriKeyResolver}'
+              #表示1秒钟放一个令牌
+              redis-rate-limiter.replenishRate: 1
+              #表示最大的令牌数是2,就是1秒钟内限制访问次数
+              redis-rate-limiter.burstCapacity: 2
+      #注释掉,否则限流不起作用!!!也就是开启后上面的配置 predicates 就失效了,即开启服务名转发时就失效,也就是看不到返回的是429的状态码
+      #discovery:
+        #locator:
+          #enabled: true
+#设置注册中心
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:9091/eureka/
+  instance:
+    instance-id: gateway-9002
+    prefer-ip-address: true
